@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MR Product Master List Generator</title>
+<style>
+:root{--bg:#f3f6fa;--ink:#152033;--muted:#667085;--line:#e4e8ef;--card:#fff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--ink);color:#fff}.head{max-width:1180px;margin:auto;padding:18px 20px;display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:10px;background:#fff;color:var(--ink);display:grid;place-items:center;font-weight:900}
+h1{font-size:19px;margin:0}.tag{font-size:12px;color:#cbd3df;margin-top:3px}
+main{max-width:1180px;margin:auto;padding:28px 16px 50px}.hero h2{margin:0 0 6px;font-size:30px}.hero p{margin:0 0 20px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 35px rgba(21,32,51,.07);overflow:hidden}
+.bar{height:58px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:10px}
+.bar span{font-size:13px;color:var(--muted)}
+.btn{appearance:none;border:0;border-radius:9px;background:var(--ink);color:#fff;padding:10px 15px;font-weight:750;text-decoration:none;cursor:pointer;font-size:13px}
+.stage{position:relative;min-height:820px;background:#fff}
+iframe{display:block;width:100%;height:820px;min-height:820px;border:0}
+.fallback{display:none;position:absolute;inset:0;background:#fff;align-items:center;justify-content:center;text-align:center;padding:30px}
+.fallback.show{display:flex}.box{max-width:560px}.box h3{font-size:23px;margin:0 0 10px}.box p{line-height:1.6;color:var(--muted);margin:0 0 20px}
+.note{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fafbfc;color:var(--muted);font-size:12px;line-height:1.5}
+footer{text-align:center;padding:18px;color:#8b95a5;font-size:12px}
+@media(max-width:600px){main{padding:20px 10px}.hero h2{font-size:24px}.stage,iframe{min-height:820px;height:820px}}
+</style>
+</head>
+<body>
+<header><div class="head"><div class="logo">MR</div><div><h1>MR Product Master List Generator</h1><div class="tag">Product master list generation tool</div></div></div></header>
+<main>
+<div class="hero"><h2>Generate Product Master List</h2><p>Complete the form below to generate your product master list.</p></div>
+<section class="card">
+<div class="bar"><span>Generator Form</span><a class="btn" target="_blank" rel="noopener" href="https://rajibmahato.app.n8n.cloud/form/dac4f82c-9452-42f6-bb0f-e6622be8a694">Open directly ↗</a></div>
+<div class="stage">
+<iframe id="formFrame" src="https://rajibmahato.app.n8n.cloud/form/dac4f82c-9452-42f6-bb0f-e6622be8a694" title="MR Product Master List Generator" loading="eager" allow="clipboard-write;fullscreen"></iframe>
+<div id="fallback" class="fallback">
+<div class="box">
+<h3>Opening the secure generator…</h3>
+<p>Your browser is preventing the n8n server from being displayed inside an iframe. The generator itself is available and can be opened directly.</p>
+<a class="btn" target="_blank" rel="noopener" href="https://rajibmahato.app.n8n.cloud/form/dac4f82c-9452-42f6-bb0f-e6622be8a694">Open Product Master List Generator</a>
+<div class="note">This fallback is automatic. There is no client-side JavaScript that can safely bypass Firefox's X-Frame-Options or Content-Security-Policy restrictions.</div>
+</div></div>
+</div></section>
+</main>
+<footer>MR Product Master List Generator</footer>
+<script>
+/*
+  Advanced client-side approach:
+  We keep the iframe as the primary renderer. If the browser reports
+  an iframe security failure, there is no legitimate client-side
+  mechanism to rewrite the remote response headers.
+*/
+const frame=document.getElementById('formFrame');
+const fallback=document.getElementById('fallback');
+let loaded=false;
+frame.addEventListener('load',()=>{loaded=true;});
+setTimeout(()=>{
+  // Firefox may block the remote document before a useful load event.
+  // Show a direct-open fallback only when the frame remains blank.
+  try{
+    const doc=frame.contentDocument;
+    if(!loaded || !doc || !doc.body || !doc.body.innerHTML.trim()) fallback.classList.add('show');
+  }catch(e){
+    fallback.classList.add('show');
+  }
+},3500);
+</script>
+</body>
+</html>
