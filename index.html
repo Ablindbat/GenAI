@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pharma MR Detailing List Studio (Gemini 3 Series & Live Editor)</title>
+<title>Pharma PDF</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
@@ -23,7 +23,7 @@
       margin: 0 !important;
       box-shadow: none !important;
     }
-    .edit-control { display: none !important; }
+    .edit-control, .reorder-control, .color-swatch-picker { display: none !important; }
     [contenteditable="true"] { outline: none !important; background: transparent !important; }
   }
   .a4-sheet {
@@ -34,7 +34,7 @@
     box-sizing: border-box;
     overflow: hidden;
   }
-  /* Inline Edit Mode Styling */
+  /* Inline Editing Styles */
   .editing-active [contenteditable="true"]:hover {
     outline: 1px dashed #38bdf8 !important;
     background-color: rgba(56, 189, 248, 0.08);
@@ -44,11 +44,25 @@
     outline: 2px solid #0284c7 !important;
     background-color: rgba(56, 189, 248, 0.15);
   }
-  .exporting .edit-control {
+  .exporting .edit-control,
+  .exporting .reorder-control,
+  .exporting .color-swatch-picker {
     display: none !important;
   }
   .exporting [contenteditable="true"] {
     outline: none !important;
+  }
+  /* Drag & Drop Styles */
+  .draggable-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .draggable-card.dragging {
+    opacity: 0.45;
+    transform: scale(0.98);
+    border: 2px dashed #0284c7 !important;
+  }
+  .draggable-card.drag-over {
+    border-top: 3px solid #38bdf8 !important;
   }
 </style>
 </head>
@@ -60,9 +74,9 @@
       <div>
         <h1 class="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
           <i class="fa-solid fa-mortar-pestle text-sky-400"></i>
-          Pharma MR Detailing List Studio
+          A Blind BAT
         </h1>
-        <p class="text-sm text-slate-400 mt-1">Multi-Image Gemini Extraction + Live In-Page PDF Editor</p>
+        <p class="text-sm text-slate-400 mt-1">Multi-Image Extraction, Drag-to-Rearrange Cards, and Custom Category Colors</p>
       </div>
       <div class="flex items-center gap-3">
         <!-- Edit Mode Switch -->
@@ -80,7 +94,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       
-      <!-- Input Sidebar -->
+      <!-- Left Input Sidebar -->
       <div class="lg:col-span-4 bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col gap-4">
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Gemini API Key</label>
@@ -90,8 +104,8 @@
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Gemini Model Version</label>
           <select id="model-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-400">
-            <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Latest Flagship Vision & Speed)</option>
-            <option value="gemini-3.7-flash">Gemini 3.7 Flash (High-Accuracy Multimodal)</option>
+            <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Flagship Speed & Vision)</option>
+            <option value="gemini-3.7-flash">Gemini 3.7 Flash (High Accuracy)</option>
             <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Complex Handwriting)</option>
             <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (Fast OCR)</option>
           </select>
@@ -122,22 +136,21 @@
 
         <hr class="border-slate-700 my-1">
 
-        <!-- Manual PDF Controls -->
         <div>
-          <p class="text-xs font-semibold uppercase text-slate-400 mb-2">Quick Structural Additions</p>
+          <p class="text-xs font-semibold uppercase text-slate-400 mb-2">Category Tools</p>
           <button id="add-category-btn" class="w-full border border-sky-500 text-sky-400 hover:bg-sky-500/10 font-medium py-2 rounded-lg text-xs flex items-center justify-center gap-2 transition">
-            <i class="fa-solid fa-folder-plus"></i> Add New Category Card
+            <i class="fa-solid fa-folder-plus"></i> Add New Therapeutic Category
           </button>
         </div>
       </div>
 
-      <!-- Live Interactive PDF Preview -->
+      <!-- Live Interactive & Reorderable PDF Sheet -->
       <div class="lg:col-span-8 overflow-x-auto flex flex-col items-center bg-slate-950 p-4 rounded-xl border border-slate-800">
         
-        <!-- Live Edit Tooling Status Indicator -->
+        <!-- Live Edit Helper -->
         <div id="edit-banner" class="hidden w-full max-w-[210mm] bg-amber-500/20 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-t text-xs flex justify-between items-center mb-1">
-          <span><i class="fa-solid fa-circle-info mr-1"></i> <strong>Live Edit Active:</strong> Click any text, formulation, or badge on the sheet below to edit directly.</span>
-          <button onclick="toggleEditMode()" class="underline hover:text-white font-semibold">Done Editing</button>
+          <span><i class="fa-solid fa-arrows-up-down-left-right mr-1"></i> <strong>Edit &amp; Reorder Mode Active:</strong> Drag handles or use [◀ / ▶] to arrange categories. Click swatches to change card colors.</span>
+          <button onclick="toggleEditMode()" class="underline hover:text-white font-semibold">Done</button>
         </div>
 
         <!-- Printable A4 Container -->
@@ -159,9 +172,9 @@
               </div>
             </div>
 
-            <!-- Dynamic 2-Column Product Grid -->
+            <!-- Two-Column Product Card Grid -->
             <div id="product-grid" class="grid grid-cols-2 gap-3 text-[10px]">
-              <!-- Product Cards injected here -->
+              <!-- Dynamically populated, draggable cards -->
             </div>
           </div>
 
@@ -171,19 +184,19 @@
               <div class="border-r border-slate-700 pr-2">
                 <p contenteditable="false" class="text-sky-400 font-bold uppercase mb-0.5 text-[9.5px]">Storage &amp; Cold Chain</p>
                 <div contenteditable="false" class="outline-none text-slate-300">
-                  Keep biologicals &amp; lyophilized vials stored at 2°C–8°C. Store solid oral forms below 25°C in controlled moisture conditions.
+                  Keep biologicals &amp; lyophilized vials stored at 2°C–8°C. Store solid oral forms below 25°C in controlled moisture conditions[cite: 1, 2].
                 </div>
               </div>
               <div class="border-r border-slate-700 pr-2">
                 <p contenteditable="false" class="text-sky-400 font-bold uppercase mb-0.5 text-[9.5px]">Quality Standards</p>
                 <div contenteditable="false" class="outline-none text-slate-300">
-                  Manufactured in WHO-GMP &amp; cGMP certified facilities. Tamper-evident Alu-Alu packing ensures salt stability.
+                  Manufactured in WHO-GMP &amp; cGMP certified facilities[cite: 1, 2]. Tamper-evident Alu-Alu packing ensures salt stability[cite: 1, 2].
                 </div>
               </div>
               <div>
                 <p contenteditable="false" class="text-sky-400 font-bold uppercase mb-0.5 text-[9.5px]">Doctor-Call Highlights</p>
                 <div contenteditable="false" class="outline-none text-slate-300">
-                  All liquid antacids, paediatric drops, and cough syrups are 100% Sugar-Free &amp; diabetic-safe.
+                  All liquid antacids, paediatric drops, and cough syrups are 100% Sugar-Free &amp; diabetic-safe[cite: 1, 2].
                 </div>
               </div>
             </div>
@@ -198,21 +211,24 @@
   <script>
     let isEditMode = false;
     let selectedImageFiles = [];
+    let draggedIndex = null;
 
-    const categoryColors = {
-      "Antibiotics": "bg-teal-700",
-      "Gastroenterology": "bg-blue-900",
-      "Pain & Analgesics": "bg-slate-700",
-      "Respiratory": "bg-sky-800",
-      "Vitamins/Nutraceuticals": "bg-indigo-700",
-      "Dermatology": "bg-emerald-800",
-      "Default": "bg-slate-800"
-    };
+    // Palette of presets
+    const colorSwatches = [
+      { name: "Teal", hex: "#0f766e" },
+      { name: "Navy", hex: "#1e3a8a" },
+      { name: "Slate", hex: "#334155" },
+      { name: "Cyan", hex: "#0369a1" },
+      { name: "Blue", hex: "#1d4ed8" },
+      { name: "Green", hex: "#15803d" },
+      { name: "Crimson", hex: "#991b1b" },
+      { name: "Purple", hex: "#6b21a8" }
+    ];
 
     let dataset = [
       {
         name: "Antibiotics & Anti-Infectives",
-        theme: "Antibiotics",
+        color: "#0f766e",
         products: [
           { brand: "Auroclav-625 LB", composition: "Amoxicillin 500mg + Potassium Clavulanate 125mg + L. Acidophilus 60M Spores", form: "Tablet" },
           { brand: "Cefurox-500 CV", composition: "Cefuroxime Axetil 500mg + Dilute Potassium Clavulanate 125mg", form: "Tablet" },
@@ -221,7 +237,7 @@
       },
       {
         name: "Gastroenterology & Hepatology",
-        theme: "Gastroenterology",
+        color: "#1e3a8a",
         products: [
           { brand: "Panpro-DSR", composition: "Pantoprazole Sodium 40mg (EC) + Domperidone 30mg (SR)", form: "Capsule" },
           { brand: "Sucraspan-O", composition: "Sucralfate 1000mg + Oxetacaine 20mg / 10ml (Sugar-Free)", form: "Syrup" }
@@ -229,7 +245,7 @@
       },
       {
         name: "Pain, Ortho & Anti-Inflammatory",
-        theme: "Pain & Analgesics",
+        color: "#334155",
         products: [
           { brand: "Dolozox-SP", composition: "Aceclofenac 100mg + Paracetamol 325mg + Serratiopeptidase 15mg", form: "Tablet" },
           { brand: "Dynaflux-AQ 75", composition: "Diclofenac Sodium 75mg / 1ml Painless Aqueous Solution", form: "Injection" }
@@ -237,21 +253,21 @@
       },
       {
         name: "Respiratory & Anti-Allergic",
-        theme: "Respiratory",
+        color: "#0369a1",
         products: [
           { brand: "Montela-LC", composition: "Montelukast Sodium 10mg + Levocetirizine Dihydrochloride 5mg", form: "Tablet" }
         ]
       },
       {
         name: "Vitamins, Minerals & Haematinics",
-        theme: "Vitamins/Nutraceuticals",
+        color: "#1d4ed8",
         products: [
           { brand: "Calcidoc-K2 HD", composition: "Calcium Carbonate 1250mg + Calcitriol 0.25mcg + Vitamin K2-7 45mcg", form: "Softgel" }
         ]
       },
       {
         name: "Dermatology & Topicals",
-        theme: "Dermatology",
+        color: "#15803d",
         products: [
           { brand: "Clobiderm-GM", composition: "Clobetasol Propionate 0.05% + Gentamicin 0.1% + Miconazole Nitrate 2.0%", form: "Ointment" }
         ]
@@ -263,18 +279,56 @@
       grid.innerHTML = "";
 
       dataset.forEach((cat, catIdx) => {
-        const bg = categoryColors[cat.theme] || categoryColors["Default"];
         const card = document.createElement("div");
-        card.className = "bg-white border border-slate-300 rounded overflow-hidden shadow-xs mb-1 group";
-        
+        card.className = "draggable-card bg-white border border-slate-300 rounded overflow-hidden shadow-xs mb-1 group";
+        card.setAttribute("draggable", isEditMode ? "true" : "false");
+        card.dataset.index = catIdx;
+
+        // Drag events for rearranging
+        if (isEditMode) {
+          card.addEventListener("dragstart", (e) => {
+            draggedIndex = catIdx;
+            card.classList.add("dragging");
+            e.dataTransfer.effectAllowed = "move";
+          });
+          card.addEventListener("dragend", () => {
+            card.classList.remove("dragging");
+            document.querySelectorAll(".draggable-card").forEach(el => el.classList.remove("drag-over"));
+          });
+          card.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            card.classList.add("drag-over");
+          });
+          card.addEventListener("dragleave", () => {
+            card.classList.remove("drag-over");
+          });
+          card.addEventListener("drop", (e) => {
+            e.preventDefault();
+            card.classList.remove("drag-over");
+            if (draggedIndex !== null && draggedIndex !== catIdx) {
+              const movedItem = dataset.splice(draggedIndex, 1)[0];
+              dataset.splice(catIdx, 0, movedItem);
+              renderCards();
+            }
+          });
+        }
+
+        // Swatch options for color changer
+        const swatchesHtml = colorSwatches.map(s => `
+          <span onclick="setCategoryColor(${catIdx}, '${s.hex}')" 
+                style="background-color: ${s.hex}" 
+                class="inline-block w-2.5 h-2.5 rounded-full cursor-pointer hover:scale-125 transition border border-white/40" 
+                title="${s.name}"></span>
+        `).join("");
+
         let itemsHtml = cat.products.map((p, pIdx) => `
           <div class="flex justify-between items-center py-1 px-2 border-b border-slate-100 last:border-b-0 relative hover:bg-slate-50">
             <div class="w-3/4 pr-1">
-              <div contenteditable="${isEditMode}" class="font-bold text-slate-900 text-[9.5px] leading-tight outline-none">${p.brand}</div>
-              <div contenteditable="${isEditMode}" class="text-slate-600 text-[8px] leading-snug outline-none">${p.composition}</div>
+              <div contenteditable="${isEditMode}" onblur="updateProductText(${catIdx}, ${pIdx}, 'brand', this.innerText)" class="font-bold text-slate-900 text-[9.5px] leading-tight outline-none">${p.brand}</div>
+              <div contenteditable="${isEditMode}" onblur="updateProductText(${catIdx}, ${pIdx}, 'composition', this.innerText)" class="text-slate-600 text-[8px] leading-snug outline-none">${p.composition}</div>
             </div>
             <div class="w-1/4 text-right flex items-center justify-end gap-1">
-              <span contenteditable="${isEditMode}" class="inline-block text-[7.5px] font-bold px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 uppercase tracking-tight outline-none">${p.form}</span>
+              <span contenteditable="${isEditMode}" onblur="updateProductText(${catIdx}, ${pIdx}, 'form', this.innerText)" class="inline-block text-[7.5px] font-bold px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 uppercase tracking-tight outline-none">${p.form}</span>
               <button onclick="removeProduct(${catIdx}, ${pIdx})" class="edit-control ${isEditMode ? '' : 'hidden'} text-red-500 hover:text-red-700 text-[10px] pl-1" title="Delete Row">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
@@ -283,9 +337,22 @@
         `).join("");
 
         card.innerHTML = `
-          <div class="${bg} text-white px-2 py-1 font-bold text-[9.5px] uppercase flex justify-between items-center">
-            <span contenteditable="${isEditMode}" class="outline-none">${cat.name}</span>
+          <div style="background-color: ${cat.color || '#334155'}" class="text-white px-2 py-1 font-bold text-[9.5px] uppercase flex justify-between items-center">
             <div class="flex items-center gap-1.5">
+              <!-- Drag Handle & Reorder buttons -->
+              <span class="reorder-control ${isEditMode ? '' : 'hidden'} cursor-grab opacity-80 hover:opacity-100 mr-0.5" title="Drag to rearrange">
+                <i class="fa-solid fa-grip-vertical text-[10px]"></i>
+              </span>
+              <button onclick="moveCard(${catIdx}, -1)" class="reorder-control ${isEditMode && catIdx > 0 ? '' : 'hidden'} opacity-75 hover:opacity-100 text-[9px] px-0.5" title="Move Up/Left">◀</button>
+              <button onclick="moveCard(${catIdx}, 1)" class="reorder-control ${isEditMode && catIdx < dataset.length - 1 ? '' : 'hidden'} opacity-75 hover:opacity-100 text-[9px] px-0.5" title="Move Down/Right">▶</button>
+              <span contenteditable="${isEditMode}" onblur="updateCategoryName(${catIdx}, this.innerText)" class="outline-none">${cat.name}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <!-- Category Color Swatches & Native Color Picker -->
+              <div class="color-swatch-picker ${isEditMode ? 'flex' : 'hidden'} items-center gap-1 bg-black/20 px-1 py-0.5 rounded">
+                ${swatchesHtml}
+                <input type="color" value="${cat.color || '#334155'}" onchange="setCategoryColor(${catIdx}, this.value)" class="w-3.5 h-3.5 cursor-pointer bg-transparent border-0 p-0 rounded-full" title="Custom color picker">
+              </div>
               <button onclick="addProduct(${catIdx})" class="edit-control ${isEditMode ? '' : 'hidden'} bg-white/20 hover:bg-white/30 text-white rounded px-1 text-[8px] font-normal" title="Add Product Row">+ Add Item</button>
               <button onclick="removeCategory(${catIdx})" class="edit-control ${isEditMode ? '' : 'hidden'} text-red-300 hover:text-white text-[9px] pl-1" title="Delete Category"><i class="fa-solid fa-trash"></i></button>
             </div>
@@ -296,7 +363,30 @@
       });
     }
 
-    // Toggle In-Place Content Editing Mode
+    // Shift category position via button
+    window.moveCard = (index, delta) => {
+      const newIndex = index + delta;
+      if (newIndex < 0 || newIndex >= dataset.length) return;
+      const item = dataset.splice(index, 1)[0];
+      dataset.splice(newIndex, 0, item);
+      renderCards();
+    };
+
+    // Color setter
+    window.setCategoryColor = (catIdx, hexColor) => {
+      dataset[catIdx].color = hexColor;
+      renderCards();
+    };
+
+    window.updateProductText = (catIdx, pIdx, field, val) => {
+      dataset[catIdx].products[pIdx][field] = val.trim();
+    };
+
+    window.updateCategoryName = (catIdx, val) => {
+      dataset[catIdx].name = val.trim();
+    };
+
+    // Toggle Edit & Arrange Mode
     function toggleEditMode() {
       isEditMode = !isEditMode;
       const sheet = document.getElementById("printable-a4-sheet");
@@ -304,7 +394,6 @@
       const statusText = document.getElementById("edit-mode-status");
       const btn = document.getElementById("toggle-edit-btn");
 
-      // Toggle all contenteditable attributes
       sheet.querySelectorAll('[contenteditable]').forEach(el => {
         el.setAttribute("contenteditable", isEditMode);
       });
@@ -312,7 +401,7 @@
       if (isEditMode) {
         sheet.classList.add("editing-active");
         banner.classList.remove("hidden");
-        statusText.textContent = "Done Editing (Save)";
+        statusText.textContent = "Done Editing";
         btn.classList.replace("bg-amber-500", "bg-emerald-500");
         btn.classList.replace("hover:bg-amber-400", "hover:bg-emerald-400");
       } else {
@@ -323,17 +412,16 @@
         btn.classList.replace("hover:bg-emerald-400", "hover:bg-amber-400");
       }
 
-      // Re-render to update add/delete button visibility
       renderCards();
     }
 
     document.getElementById("toggle-edit-btn").addEventListener("click", toggleEditMode);
 
-    // Dynamic additions & removals
+    // Add / Remove helpers
     window.addProduct = (catIdx) => {
       dataset[catIdx].products.push({
-        brand: "New Brand Name",
-        composition: "Active Salt Composition With Strength",
+        brand: "New Medicine",
+        composition: "Active Formulation & Strength",
         form: "Tablet"
       });
       renderCards();
@@ -345,7 +433,7 @@
     };
 
     window.removeCategory = (catIdx) => {
-      if (confirm(`Remove "${dataset[catIdx].name}" category?`)) {
+      if (confirm(`Remove "${dataset[catIdx].name}"?`)) {
         dataset.splice(catIdx, 1);
         renderCards();
       }
@@ -353,10 +441,10 @@
 
     document.getElementById("add-category-btn").addEventListener("click", () => {
       dataset.push({
-        name: "New Therapeutic Category",
-        theme: "Default",
+        name: "New Therapeutic Segment",
+        color: "#0369a1",
         products: [
-          { brand: "Sample Brand", composition: "Active Salt Formulation", form: "Tablet" }
+          { brand: "Sample Brand", composition: "Active Salt Composition", form: "Tablet" }
         ]
       });
       renderCards();
@@ -408,7 +496,7 @@
       });
     };
 
-    // Gemini API Request
+    // Extract with selected Gemini version
     document.getElementById("extract-btn").addEventListener("click", async () => {
       const apiKey = document.getElementById("gemini-api-key").value.trim();
       const model = document.getElementById("model-select").value;
@@ -416,40 +504,41 @@
       const status = document.getElementById("status-indicator");
 
       if (!apiKey) {
-        alert("Please provide your Gemini API key.");
+        alert("Please enter your Gemini API key.");
         return;
       }
       if (selectedImageFiles.length === 0 && !rawText) {
-        alert("Please upload at least one image or provide raw product text.");
+        alert("Please upload at least one image or provide raw text.");
         return;
       }
 
       status.classList.remove("hidden");
-      status.textContent = `Connecting to ${model}... reading ${selectedImageFiles.length} image(s)...`;
+      status.textContent = `Processing with ${model}...`;
 
       const promptText = `
 Act as an expert pharmaceutical copywriter. Extract all product names, potencies, formulations, and forms.
-Group into standard categories (Antibiotics, Gastroenterology, Pain & Analgesics, Respiratory, Vitamins/Nutraceuticals, Dermatology).
-Output ONLY valid JSON matching this structure:
+Group products into logical therapeutic segments.
+Output ONLY a valid JSON array matching this format:
 [
   {
     "name": "Category Name",
-    "theme": "Antibiotics | Gastroenterology | Pain & Analgesics | Respiratory | Vitamins/Nutraceuticals | Dermatology | Default",
+    "color": "#0f766e",
     "products": [
       {
         "brand": "Brand Name",
-        "composition": "Exact Salt & Potencies",
+        "composition": "Exact Salt & Potency",
         "form": "Tablet | Syrup | Injection | Capsule | Softgel | Drops | Ointment"
       }
     ]
   }
 ]
+Pick suitable hex colors (e.g. #0f766e for antibiotics, #1e3a8a for gastro, #334155 for pain, #0369a1 for respiratory, #1d4ed8 for vitamins, #15803d for dermatology).
 `;
 
       try {
         const imageParts = await Promise.all(selectedImageFiles.map(fileToGenerativePart));
         const parts = [{ text: promptText }];
-        if (rawText) parts.push({ text: `Additional Product Text:\n${rawText}` });
+        if (rawText) parts.push({ text: `Additional Notes:\n${rawText}` });
         imageParts.forEach(p => parts.push(p));
 
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -464,14 +553,14 @@ Output ONLY valid JSON matching this structure:
 
         if (!res.ok) {
           const errData = await res.json();
-          throw new Error(errData.error?.message || "API request failed");
+          throw new Error(errData.error?.message || "Gemini API request failed");
         }
 
         const data = await res.json();
         const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
         dataset = parsed;
         renderCards();
-        status.textContent = `✓ Successfully extracted from ${selectedImageFiles.length} image(s)!`;
+        status.textContent = `✓ Extracted successfully with ${model}!`;
         setTimeout(() => status.classList.add("hidden"), 3500);
       } catch (err) {
         console.error(err);
@@ -482,8 +571,6 @@ Output ONLY valid JSON matching this structure:
     // Clean Export to A4 PDF
     document.getElementById("download-pdf-btn").addEventListener("click", () => {
       const sheet = document.getElementById("printable-a4-sheet");
-      
-      // Temporarily disable outlines and controls for crisp PDF capture
       sheet.classList.add("exporting");
 
       const opt = {
@@ -499,7 +586,6 @@ Output ONLY valid JSON matching this structure:
       });
     });
 
-    // Initial render
     renderCards();
   </script>
 </body>
